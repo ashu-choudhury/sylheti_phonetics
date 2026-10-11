@@ -126,22 +126,74 @@ pub fn to_nagri_strict(text: &str) -> String {
 /// Converts input text with fully customized developer options.
 pub fn convert(text: &str, options: &ConversionOptions) -> String {
     let mut result = String::with_capacity(text.len() * 2);
-    let mut current_token = String::new();
+    let chars: Vec<char> = text.chars().collect();
+    let len = chars.len();
+    let mut i = 0;
 
-    for c in text.chars() {
-        if c.is_alphanumeric() || c == '-' {
-            current_token.push(c);
-        } else {
-            if !current_token.is_empty() {
-                result.push_str(&process_token(&current_token, options));
-                current_token.clear();
+    while i < len {
+        // 1. Check for URL starting at i: http://, https://, ftp://, www.
+        let remaining: String = chars[i..].iter().take(10).collect();
+        if remaining.starts_with("http://")
+            || remaining.starts_with("https://")
+            || remaining.starts_with("ftp://")
+            || remaining.starts_with("www.")
+        {
+            let mut j = i;
+            while j < len && !chars[j].is_whitespace() && chars[j] != ')' && chars[j] != ']' && chars[j] != '>' {
+                result.push(chars[j]);
+                j += 1;
             }
-            result.push(c);
+            i = j;
+            continue;
         }
-    }
 
-    if !current_token.is_empty() {
-        result.push_str(&process_token(&current_token, options));
+        // 2. Check for Mention / Handle (@): e.g. @username
+        if chars[i] == '@' {
+            result.push('@');
+            i += 1;
+            while i < len && (chars[i].is_alphanumeric() || chars[i] == '.' || chars[i] == '_' || chars[i] == '-') {
+                result.push(chars[i]);
+                i += 1;
+            }
+            continue;
+        }
+
+        // 3. Check for Hashtag (#): e.g. #sylhet
+        if chars[i] == '#' {
+            result.push('#');
+            i += 1;
+            while i < len && (chars[i].is_alphanumeric() || chars[i] == '_') {
+                result.push(chars[i]);
+                i += 1;
+            }
+            continue;
+        }
+
+        // 4. Word collection (alphanumeric or hyphen)
+        if chars[i].is_alphanumeric() || chars[i] == '-' {
+            let mut token = String::new();
+            while i < len && (chars[i].is_alphanumeric() || chars[i] == '-') {
+                token.push(chars[i]);
+                i += 1;
+            }
+            // Check if this token is part of an email address: e.g. "test@example.com"
+            if i < len && chars[i] == '@' {
+                result.push_str(&token);
+                result.push('@');
+                i += 1;
+                while i < len && (chars[i].is_alphanumeric() || chars[i] == '.' || chars[i] == '_' || chars[i] == '-') {
+                    result.push(chars[i]);
+                    i += 1;
+                }
+            } else {
+                result.push_str(&process_token(&token, options));
+            }
+            continue;
+        }
+
+        // 5. Any other character (punctuation, whitespace, emoji, symbols)
+        result.push(chars[i]);
+        i += 1;
     }
 
     result
@@ -149,6 +201,14 @@ pub fn convert(text: &str, options: &ConversionOptions) -> String {
 
 /// Processes a single token (word or hyphenated compound).
 fn process_token(token: &str, options: &ConversionOptions) -> String {
+    // 0. Safety checks: pure hyphens, pure numbers, or URLs should not be transformed
+    if token.chars().all(|ch| ch == '-') || token.chars().all(|ch| ch.is_numeric()) {
+        return token.to_string();
+    }
+    if token.starts_with("http") || token.starts_with("www") {
+        return token.to_string();
+    }
+
     // 1. Direct Sylheti dictionary lookup
     if let Some(entry) = find_word(token) {
         return match options.target {

@@ -48,27 +48,27 @@ pub fn roman_to_hindi_phonetic(token: &str) -> String {
                     continue;
                 }
                 "bh" => {
-                    out.push_str("भ");
+                    out.push('भ');
                     i += 2;
                     continue;
                 }
                 "ch" => {
-                    out.push_str("च");
+                    out.push('च');
                     i += 2;
                     continue;
                 }
                 "sh" => {
-                    out.push_str("श");
+                    out.push('श');
                     i += 2;
                     continue;
                 }
                 "th" => {
-                    out.push_str("थ");
+                    out.push('थ');
                     i += 2;
                     continue;
                 }
                 "dh" => {
-                    out.push_str("ध");
+                    out.push('ध');
                     i += 2;
                     continue;
                 }
@@ -97,18 +97,18 @@ pub fn roman_to_hindi_phonetic(token: &str) -> String {
                 }
                 "ee" => {
                     if i == 0 {
-                        out.push_str("ई");
+                        out.push('ई');
                     } else {
-                        out.push_str("ी");
+                        out.push('ी');
                     }
                     i += 2;
                     continue;
                 }
                 "oo" => {
                     if i == 0 {
-                        out.push_str("ऊ");
+                        out.push('ऊ');
                     } else {
-                        out.push_str("ू");
+                        out.push('ू');
                     }
                     i += 2;
                     continue;
@@ -244,7 +244,7 @@ pub fn roman_to_bengali(token: &str) -> String {
                     if i == 0 {
                         out.push_str("অই");
                     } else {
-                        out.push_str("ই");
+                        out.push('ই');
                     }
                     i += 2;
                     continue;

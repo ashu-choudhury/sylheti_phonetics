@@ -121,6 +121,7 @@ pub fn is_english(token: &str) -> bool {
         "plan", "reason", "bro", "brother", "sister", "guy", "guys", "everyone", "anybody",
         "nobody", "true", "false", "real", "fake", "easy", "hard", "simple", "direct",
         "fast", "slow", "fresh", "cool", "great", "nice", "fine", "data", "file", "document",
+        "user", "admin", "login", "site", "website", "channel", "group", "account", "server",
     ];
     additional_english.contains(&lower.as_str())
 }
@@ -131,10 +132,8 @@ pub fn split_english_suffix(token: &str) -> Option<(&str, &str)> {
     let lower = token.to_lowercase();
 
     // Check hyphenated forms first: e.g. "office-o"
-    if let Some((stem, suf)) = token.split_once('-') {
-        if is_english(stem) {
-            return Some((stem, suf));
-        }
+    if let Some((stem, suf)) = token.split_once('-').filter(|(stem, _)| is_english(stem)) {
+        return Some((stem, suf));
     }
 
     // Check direct attached suffixes: "-o", "-e", "-ta", "-re", "-or"
