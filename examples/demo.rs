@@ -1,47 +1,44 @@
-//! Demo application showing how to use `sylheti_phonetics` in any Rust project.
+//! Demo application showing both Natural and Strict modes of `sylheti_phonetics`.
 //!
 //! Run with:
 //!     cargo run --example demo
 
-use sylheti_phonetics::{find_word, to_bengali, to_hindi_phonetic, to_nagri, SYLHETI_WORDS};
+use sylheti_phonetics::{
+    find_word, to_bengali, to_hindi_phonetic, to_hindi_phonetic_strict, to_nagri, SYLHETI_WORDS,
+};
 
 fn main() {
     println!("============================================================");
-    println!("  Sylheti Phonetics: TTS & Transliteration Engine Demo      ");
+    println!("  sylheti_phonetics: Natural & Strict Modes Demo            ");
     println!("============================================================\n");
 
     println!("Total Curated Sylheti Words: {}", SYLHETI_WORDS.len());
     println!("------------------------------------------------------------");
 
-    // Sentences including everyday chat and bilingual code-switching
-    let test_sentences = [
-        "Kila aso bhai? Khani khaiso ni?",
-        "Ami bala asi. Fani khaiba ni?",
-        "Aji shonjebela baire bairono lagbo, shonge aiba ni?",
-        "Bhai, ami office-o meeting-e aisi, please later call khoro.",
-        "Mobile-o message check khoriya dekho, important update ase.",
-    ];
+    let chat = "Bhai, ami office-o meeting-e aisi, please call khoro.";
+    println!("\n[Original WhatsApp Message]");
+    println!("  \"{}\"", chat);
 
-    for (i, sentence) in test_sentences.iter().enumerate() {
-        println!("\n[Case {}]", i + 1);
-        println!("  Input (WhatsApp Roman) : {}", sentence);
-        println!("  Vocalizer Hindi TTS    : {}", to_hindi_phonetic(sentence));
-        println!("  Bengali Script         : {}", to_bengali(sentence));
-        println!("  Sylheti Nagri          : {}", to_nagri(sentence));
-    }
+    println!("\n[Mode 1: Natural Mode (Default)]");
+    println!("  -> {}", to_hindi_phonetic(chat));
+    println!("  (Notice: 'ऑफ़िस-ओ', 'मीटिंग-ए', 'प्लीज़', 'कॉल' are phonetically integrated");
+    println!("   so the TTS voice reads the entire sentence in one continuous, natural breath!)");
+
+    println!("\n[Mode 2: Strict Mode]");
+    println!("  -> {}", to_hindi_phonetic_strict(chat));
+    println!("  (Notice: 'office-ओ', 'meeting-ए', 'please', 'call' stay in Latin characters");
+    println!("   for developers who prefer strict visual bilingual separation.)");
 
     println!("\n------------------------------------------------------------");
-    println!("Bilingual Code-Switching Demo:");
-    println!("Input: 'Bhai, ami office-o meeting-e aisi, please call khoro.'");
-    println!(
-        "TTS Output: {}",
-        to_hindi_phonetic("Bhai, ami office-o meeting-e aisi, please call khoro.")
-    );
-    println!("(Notice: 'office', 'meeting', 'please', 'call' remain untouched English,");
-    println!(" while Sylheti words convert to authentic Devanagari phonetics!)");
+    println!("Cross-Script Conversions:");
+    let greeting = "Kila aso bhai? Khani khaiso ni?";
+    println!("  Romanized: {}", greeting);
+    println!("  Hindi TTS: {}", to_hindi_phonetic(greeting));
+    println!("  Bengali:   {}", to_bengali(greeting));
+    println!("  Nagri:     {}", to_nagri(greeting));
 
     println!("\n------------------------------------------------------------");
-    println!("Sample Dictionary Lookups:");
+    println!("Dictionary Lookups:");
     let sample_queries = ["kila", "khani", "fani", "zairam", "khosoba"];
     for q in sample_queries {
         if let Some(entry) = find_word(q) {
@@ -57,6 +54,6 @@ fn main() {
     }
 
     println!("\n============================================================");
-    println!("Ready to publish to crates.io and integrate with Android/NVDA!");
+    println!("Ready for crates.io publication, Android JNI, and NVDA!");
     println!("============================================================");
 }

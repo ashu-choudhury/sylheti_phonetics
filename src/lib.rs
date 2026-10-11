@@ -1,20 +1,21 @@
 //! # Sylheti Phonetics (`sylheti_phonetics`)
 //!
 //! A high-performance, native Rust library for Sylheti language processing,
-//! phonetic dictionary lookup, and transliteration.
+//! phonetic dictionary lookup, and speech synthesis transliteration.
 //!
-//! Specifically engineered for speech synthesis (TTS) and digital messaging to bridge
+//! Specifically engineered for text-to-speech (TTS) engines and chat accessibility to bridge
 //! Romanized Sylheti (as commonly typed in chats) into:
 //! 1. **Hindi Devanagari (TTS Mode)**: Specially crafted for Hindi Vocalizer TTS engines
 //!    to synthesize authentic native Sylheti speech with correct fricatives (`ख़`, `फ़`, `ज़`).
 //! 2. **Standard Bengali Script**: For visual readers and formal orthography.
 //! 3. **Sylheti Nagri Script**: For historical and Unicode-standard revitalization (`U+A800..U+A82F`).
 //!
-//! ### Intelligent English Code-Switching
-//! In real-world chats, speakers frequently mix English words with Sylheti
-//! (*"Bhai, ami office-o meeting-e aisi, please call khoro"*).
-//! `sylheti_phonetics` intelligently recognizes English loanwords and preserves them in Latin script,
-//! allowing multilingual synthesizers to read English words natively without mangling them.
+//! ### Dual Code-Switching Modes for Developers
+//! - **Natural Mode (Default)**: Converts recognized English loanwords into natural Indian phonetic
+//!   equivalents (e.g. `office` -> `ऑफ़िस`, `meeting` -> `मीटिंग`, `call` -> `कॉल`).
+//!   *Why?* It eliminates awkward voice switching, stuttering, and unnatural pauses in TTS engines!
+//! - **Strict Mode**: Preserves English words in raw Latin alphabet (e.g. `office-o` -> `office-ओ`,
+//!   `please` -> `please`) for visual chat displays or multilingual engines with clean script switching.
 
 pub mod dictionary;
 pub mod english;
@@ -22,78 +23,108 @@ pub mod rules;
 pub mod types;
 
 pub use dictionary::{find_word, SYLHETI_WORDS};
-pub use english::{is_english, split_english_suffix};
+pub use english::{is_english, lookup_loanword, split_english_suffix};
 pub use rules::{roman_to_bengali, roman_to_hindi_phonetic, roman_to_nagri};
-pub use types::{PartOfSpeech, TargetScript, WordEntry};
+pub use types::{ConversionOptions, EnglishMode, PartOfSpeech, TargetScript, WordEntry};
 
-/// Configuration options for text conversion and transliteration.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConversionOptions {
-    /// Target script for Sylheti words
-    pub target: TargetScript,
-    /// Whether to detect and preserve standard English words in original Latin script
-    pub preserve_english: bool,
-}
-
-impl Default for ConversionOptions {
-    fn default() -> Self {
-        Self {
-            target: TargetScript::HindiVocalizer,
-            preserve_english: true,
-        }
-    }
-}
-
-/// Converts Romanized Sylheti into Hindi Devanagari phonetically optimized for
-/// Hindi TTS synthesizers (like Nuance Vocalizer, Google TTS, SAPI).
+/// Converts Romanized Sylheti into Hindi Devanagari using **Natural Mode (Default)**.
 ///
-/// Automatically preserves recognized English words in Latin script so the synthesizer's
-/// English engine reads them naturally.
+/// Converts Sylheti words to authentic phonetics AND converts common English loanwords
+/// (`office` -> `ऑफ़िस`, `meeting` -> `मीटिंग`, `call` -> `कॉल`) so the TTS voice speaks
+/// in one unbroken, natural flow without voice-profile glitches.
 ///
 /// # Example
 /// ```rust
 /// use sylheti_phonetics::to_hindi_phonetic;
 ///
-/// let text = "Bhai, ami office-o aisi, please call khoro.";
+/// let text = "Bhai, ami office-o meeting-e aisi, please call khoro.";
 /// let output = to_hindi_phonetic(text);
-/// // Sylheti words are converted; English loanwords like "office", "please", "call" are preserved!
 /// assert!(output.contains("भाइ"));
-/// assert!(output.contains("please"));
+/// assert!(output.contains("ऑफ़िस-ओ"));
+/// assert!(output.contains("मीटिंग-ए"));
+/// assert!(output.contains("कॉल"));
+/// assert!(output.contains("ख़ोरो"));
 /// ```
 pub fn to_hindi_phonetic(text: &str) -> String {
-    convert_with_options(
+    convert(
         text,
         &ConversionOptions {
             target: TargetScript::HindiVocalizer,
-            preserve_english: true,
+            english_mode: EnglishMode::Natural,
         },
     )
 }
 
-/// Converts Romanized Sylheti text into Bengali script.
+/// Converts Romanized Sylheti into Hindi Devanagari using **Strict Mode**.
+///
+/// Keeps recognized English words strictly in their Latin characters
+/// (e.g., `office`, `meeting`, `please`) while converting Sylheti words to Devanagari.
+///
+/// # Example
+/// ```rust
+/// use sylheti_phonetics::to_hindi_phonetic_strict;
+///
+/// let text = "Bhai, ami office-o meeting-e aisi, please call khoro.";
+/// let output = to_hindi_phonetic_strict(text);
+/// assert!(output.contains("office-ओ"));
+/// assert!(output.contains("please"));
+/// ```
+pub fn to_hindi_phonetic_strict(text: &str) -> String {
+    convert(
+        text,
+        &ConversionOptions {
+            target: TargetScript::HindiVocalizer,
+            english_mode: EnglishMode::Strict,
+        },
+    )
+}
+
+/// Converts Romanized Sylheti text into Bengali script (Natural Mode).
 pub fn to_bengali(text: &str) -> String {
-    convert_with_options(
+    convert(
         text,
         &ConversionOptions {
             target: TargetScript::Bengali,
-            preserve_english: true,
+            english_mode: EnglishMode::Natural,
         },
     )
 }
 
-/// Converts Romanized Sylheti text into historical Sylheti Nagri script.
+/// Converts Romanized Sylheti text into Bengali script (Strict Mode, preserving Latin English).
+pub fn to_bengali_strict(text: &str) -> String {
+    convert(
+        text,
+        &ConversionOptions {
+            target: TargetScript::Bengali,
+            english_mode: EnglishMode::Strict,
+        },
+    )
+}
+
+/// Converts Romanized Sylheti text into historical Sylheti Nagri script (Natural Mode).
 pub fn to_nagri(text: &str) -> String {
-    convert_with_options(
+    convert(
         text,
         &ConversionOptions {
             target: TargetScript::SylhetiNagri,
-            preserve_english: true,
+            english_mode: EnglishMode::Natural,
         },
     )
 }
 
-/// Converts input text with explicit options.
-pub fn convert_with_options(text: &str, options: &ConversionOptions) -> String {
+/// Converts Romanized Sylheti text into historical Sylheti Nagri script (Strict Mode).
+pub fn to_nagri_strict(text: &str) -> String {
+    convert(
+        text,
+        &ConversionOptions {
+            target: TargetScript::SylhetiNagri,
+            english_mode: EnglishMode::Strict,
+        },
+    )
+}
+
+/// Converts input text with fully customized developer options.
+pub fn convert(text: &str, options: &ConversionOptions) -> String {
     let mut result = String::with_capacity(text.len() * 2);
     let mut current_token = String::new();
 
@@ -118,7 +149,7 @@ pub fn convert_with_options(text: &str, options: &ConversionOptions) -> String {
 
 /// Processes a single token (word or hyphenated compound).
 fn process_token(token: &str, options: &ConversionOptions) -> String {
-    // 1. Check if it's directly in the Sylheti dictionary
+    // 1. Direct Sylheti dictionary lookup
     if let Some(entry) = find_word(token) {
         return match options.target {
             TargetScript::HindiVocalizer => entry.hindi_phonetic.to_string(),
@@ -127,37 +158,46 @@ fn process_token(token: &str, options: &ConversionOptions) -> String {
         };
     }
 
-    // 2. Check English code-switching
-    if options.preserve_english {
-        // Pure English word: e.g. "meeting", "please", "call"
-        if is_english(token) {
-            return token.to_string();
-        }
+    // 2. English code-switching handling
+    match options.english_mode {
+        EnglishMode::Natural => {
+            // Check direct loanword mapping
+            if let Some(transcription) = lookup_loanword(token, options.target) {
+                return transcription.to_string();
+            }
 
-        // English word with attached Sylheti suffix: e.g. "office-o", "bus-e"
-        if let Some((stem, suf)) = split_english_suffix(token) {
-            let suf_converted = match options.target {
-                TargetScript::HindiVocalizer => match suf {
-                    "-o" | "o" => "-ओ",
-                    "-e" | "e" => "-ए",
-                    "-ta" | "ta" => "-टा",
-                    "-re" | "re" => "-रे",
-                    _ => suf,
-                },
-                TargetScript::Bengali => match suf {
-                    "-o" | "o" => "-ও",
-                    "-e" | "e" => "-এ",
-                    "-ta" | "ta" => "-টা",
-                    "-re" | "re" => "-রে",
-                    _ => suf,
-                },
-                TargetScript::SylhetiNagri => match suf {
-                    "-o" | "o" => "-\u{A805}",
-                    "-e" | "e" => "-\u{A804}",
-                    _ => suf,
-                },
-            };
-            return format!("{}{}", stem, suf_converted);
+            // Check English word with attached Sylheti suffix: e.g. "office-o", "meeting-e"
+            if let Some((stem, suf)) = split_english_suffix(token) {
+                let stem_converted = if let Some(tr) = lookup_loanword(stem, options.target) {
+                    tr.to_string()
+                } else if is_english(stem) {
+                    stem.to_string()
+                } else {
+                    roman_to_hindi_phonetic(stem)
+                };
+
+                let suf_converted = format_suffix(suf, options.target);
+                return format!("{}{}", stem_converted, suf_converted);
+            }
+
+            // General English word not in loanword map
+            if is_english(token) {
+                return token.to_string();
+            }
+        }
+        EnglishMode::Strict => {
+            // Strict mode preserves English words as Latin
+            if is_english(token) {
+                return token.to_string();
+            }
+
+            if let Some((stem, suf)) = split_english_suffix(token) {
+                let suf_converted = format_suffix(suf, options.target);
+                return format!("{}{}", stem, suf_converted);
+            }
+        }
+        EnglishMode::RawPhonetic => {
+            // Skips English detection completely
         }
     }
 
@@ -166,6 +206,34 @@ fn process_token(token: &str, options: &ConversionOptions) -> String {
         TargetScript::HindiVocalizer => roman_to_hindi_phonetic(token),
         TargetScript::Bengali => roman_to_bengali(token),
         TargetScript::SylhetiNagri => roman_to_nagri(token),
+    }
+}
+
+/// Formats a Sylheti grammatical suffix into the target script.
+fn format_suffix(suf: &str, target: TargetScript) -> String {
+    let clean = suf.trim_start_matches('-');
+    match target {
+        TargetScript::HindiVocalizer => match clean {
+            "o" => "-ओ".to_string(),
+            "e" => "-ए".to_string(),
+            "ta" => "-टा".to_string(),
+            "re" => "-रे".to_string(),
+            "or" => "-ओर".to_string(),
+            _ => format!("-{}", clean),
+        },
+        TargetScript::Bengali => match clean {
+            "o" => "-ও".to_string(),
+            "e" => "-এ".to_string(),
+            "ta" => "-টা".to_string(),
+            "re" => "-রে".to_string(),
+            "or" => "-ওর".to_string(),
+            _ => format!("-{}", clean),
+        },
+        TargetScript::SylhetiNagri => match clean {
+            "o" => "-\u{A805}".to_string(),
+            "e" => "-\u{A804}".to_string(),
+            _ => format!("-{}", clean),
+        },
     }
 }
 
@@ -216,21 +284,28 @@ mod tests {
     }
 
     #[test]
-    fn test_english_code_switching_preservation() {
-        let input = "Bhai, ami office-o meeting-e aisi, please later call khoro.";
+    fn test_natural_mode_loanword_conversion() {
+        let input = "Bhai, ami office-o meeting-e aisi, please call khoro.";
         let output = to_hindi_phonetic(input);
 
-        // English words must remain English
+        // In Natural mode, loanwords are converted to seamless Devanagari for unbroken TTS audio!
+        assert!(output.contains("ऑफ़िस-ओ"));
+        assert!(output.contains("मीटिंग-ए"));
+        assert!(output.contains("प्लीज़"));
+        assert!(output.contains("कॉल"));
+        assert!(output.contains("ख़ोरो"));
+    }
+
+    #[test]
+    fn test_strict_mode_preservation() {
+        let input = "Bhai, ami office-o meeting-e aisi, please call khoro.";
+        let output = to_hindi_phonetic_strict(input);
+
+        // In Strict mode, English words remain in Latin
         assert!(output.contains("office-ओ"));
         assert!(output.contains("meeting-ए"));
         assert!(output.contains("please"));
-        assert!(output.contains("later"));
         assert!(output.contains("call"));
-
-        // Sylheti words must be converted
-        assert!(output.contains("भाइ"));
-        assert!(output.contains("आमी"));
-        assert!(output.contains("आइसी"));
         assert!(output.contains("ख़ोरो"));
     }
 }

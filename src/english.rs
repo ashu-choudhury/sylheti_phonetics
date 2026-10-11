@@ -1,52 +1,132 @@
-//! Common English vocabulary detector for bilingual code-switching in chat.
-//!
-//! Preserves standard English words in their original Latin script so that
-//! multilingual TTS synthesizers (like Nuance Vocalizer, Google TTS, SAPI) can speak
-//! them natively with their English voice module rather than mangling them.
+//! Common English vocabulary detector and natural loanword phonetics for bilingual code-switching.
 
-/// Curated set of high-frequency English words commonly used in bilingual chats.
-static COMMON_ENGLISH_WORDS: &[&str] = &[
-    // Greetings & Social
-    "hello", "hi", "hey", "bye", "ok", "okay", "please", "sorry", "thanks", "thank", "welcome",
-    "good", "morning", "night", "evening", "afternoon", "congrats", "happy", "birthday",
-    // Work, School & Study
-    "office", "meeting", "job", "work", "boss", "colleague", "interview", "salary",
-    "school", "college", "university", "class", "exam", "test", "result", "teacher",
-    "sir", "madam", "student", "study", "project", "presentation", "assignment",
-    // Technology & Social Media
-    "mobile", "phone", "call", "message", "msg", "chat", "online", "offline", "network",
-    "internet", "wifi", "laptop", "computer", "app", "application", "battery", "charge",
-    "charger", "video", "audio", "photo", "pic", "camera", "link", "youtube", "facebook",
-    "whatsapp", "instagram", "google", "mail", "email", "post", "status", "profile",
-    "update", "download", "upload", "share", "install", "file", "document", "data", "live", "location", "number", "money", "news",
-    // Transport & Places
-    "bus", "train", "car", "bike", "taxi", "auto", "road", "station", "airport", "ticket",
-    "seat", "travel", "tour", "hotel", "restaurant", "hospital", "doctor", "medicine",
-    "clinic", "pharmacy", "bank", "atm", "market", "shop", "mall",
-    // Time & Scheduling
-    "now", "later", "today", "tomorrow", "yesterday", "sunday", "monday", "tuesday",
-    "wednesday", "thursday", "friday", "saturday", "time", "date", "minute", "hour",
-    "week", "month", "year", "wait", "late", "early", "urgent", "busy", "free", "ready",
-    // Common Verbs & Adjectives
-    "see", "hear", "listen", "tell", "say", "know", "think", "want", "need", "like",
-    "love", "hate", "feel", "try", "help", "send", "give", "take", "check", "confirm",
-    "cancel", "join", "leave", "start", "stop", "finish", "open", "close", "important",
-    "problem", "issue", "idea", "plan", "detail", "details", "reason", "friend", "best",
-    "bro", "brother", "sister", "friend", "guy", "guys", "everyone", "anybody", "nobody",
-    "sure", "true", "false", "real", "fake", "clear", "easy", "hard", "simple", "direct",
-    "fast", "slow", "fresh", "cool", "super", "great", "nice", "fine", "perfect",
+use crate::types::TargetScript;
+
+/// Structure defining an English loanword mapping across scripts.
+struct LoanwordEntry {
+    english: &'static str,
+    hindi: &'static str,
+    bengali: &'static str,
+    nagri: &'static str,
+}
+
+static ENGLISH_LOANWORDS: &[LoanwordEntry] = &[
+    LoanwordEntry { english: "office", hindi: "ऑफ़िस", bengali: "অফিস", nagri: "ꠅꠚꠤꠍ" },
+    LoanwordEntry { english: "meeting", hindi: "मीटिंग", bengali: "মিটিং", nagri: "ꠝꠤꠐꠤꠋ" },
+    LoanwordEntry { english: "call", hindi: "कॉल", bengali: "কল", nagri: "ꠇꠟ" },
+    LoanwordEntry { english: "message", hindi: "मैसेज", bengali: "মেসেজ", nagri: "ꠝꠦꠍꠦꠎ" },
+    LoanwordEntry { english: "msg", hindi: "मैसेज", bengali: "মেসেজ", nagri: "ꠝꠦꠍꠦꠎ" },
+    LoanwordEntry { english: "please", hindi: "प्लीज़", bengali: "প্লিজ", nagri: "ꠙ꠆ꠟꠤꠎ" },
+    LoanwordEntry { english: "later", hindi: "लेटर", bengali: "লেটার", nagri: "ꠟꠦꠐꠣꠞ" },
+    LoanwordEntry { english: "now", hindi: "नाउ", bengali: "নাউ", nagri: "ꠘꠣꠃ" },
+    LoanwordEntry { english: "mobile", hindi: "मोबाइल", bengali: "মোবাইল", nagri: "ꠝꠧꠛꠣꠁꠟ" },
+    LoanwordEntry { english: "phone", hindi: "फ़ोन", bengali: "ফোন", nagri: "ꠙꠧꠘ" },
+    LoanwordEntry { english: "bus", hindi: "बस", bengali: "বাস", nagri: "ꠛꠣꠍ" },
+    LoanwordEntry { english: "train", hindi: "ट्रेन", bengali: "ট্রেন", nagri: "ꠐ꠆ꠞꠦꠘ" },
+    LoanwordEntry { english: "hospital", hindi: "हॉस्पिटल", bengali: "হাসপাতাল", nagri: "ꠢꠣꠡꠙꠣꠔꠣꠟ" },
+    LoanwordEntry { english: "doctor", hindi: "डॉक्टर", bengali: "ডাক্তার", nagri: "ꠒꠣꠇ꠆ꠔꠣꠞ" },
+    LoanwordEntry { english: "college", hindi: "कॉलेज", bengali: "কলেজ", nagri: "ꠇꠟꠦꠎ" },
+    LoanwordEntry { english: "school", hindi: "स्कूल", bengali: "স্কুল", nagri: "ꠁꠡ꠆ꠇꠥꠟ" },
+    LoanwordEntry { english: "class", hindi: "क्लास", bengali: "ক্লাস", nagri: "ꠇ꠆ꠟꠣꠍ" },
+    LoanwordEntry { english: "exam", hindi: "एग्ज़ाम", bengali: "এক্সাম", nagri: "ꠄꠇ꠆ꠎꠣꠝ" },
+    LoanwordEntry { english: "test", hindi: "टेस्ट", bengali: "টেস্ট", nagri: "ꠐꠦꠡ꠆ꠐ" },
+    LoanwordEntry { english: "result", hindi: "रिजल्ट", bengali: "রেজাল্ট", nagri: "ꠞꠦꠎꠣꠟ꠆ꠐ" },
+    LoanwordEntry { english: "time", hindi: "टाइम", bengali: "টাইম", nagri: "ꠐꠣꠁꠝ" },
+    LoanwordEntry { english: "ticket", hindi: "टिकट", bengali: "টিকিট", nagri: "ꠐꠤꠇꠤꠐ" },
+    LoanwordEntry { english: "check", hindi: "चेक", bengali: "চেক", nagri: "ꠌꠦꠇ" },
+    LoanwordEntry { english: "update", hindi: "अपडेट", bengali: "আপডেট", nagri: "ꠀꠙꠒꠦꠐ" },
+    LoanwordEntry { english: "important", hindi: "इम्पॉर्टेन्ट", bengali: "ইম্পরট্যান্ট", nagri: "ꠁꠝ꠆ꠙꠞꠐꠦꠘꠐ" },
+    LoanwordEntry { english: "problem", hindi: "प्रॉब्लम", bengali: "প্রবলেম", nagri: "ꠙ꠆ꠞꠛꠟꠦꠝ" },
+    LoanwordEntry { english: "free", hindi: "फ़्री", bengali: "ফ্রি", nagri: "ꠙ꠆ꠞꠤ" },
+    LoanwordEntry { english: "busy", hindi: "बिज़ी", bengali: "বিজি", nagri: "ꠛꠤꠎꠤ" },
+    LoanwordEntry { english: "ready", hindi: "रेडी", bengali: "রেডি", nagri: "ꠞꠦꠒꠤ" },
+    LoanwordEntry { english: "wait", hindi: "वेट", bengali: "ওয়েট", nagri: "ꠅꠄꠐ" },
+    LoanwordEntry { english: "late", hindi: "लेट", bengali: "লেট", nagri: "ꠟꠦꠐ" },
+    LoanwordEntry { english: "urgent", hindi: "अर्जेंट", bengali: "আর্জেন্ট", nagri: "ꠀꠞ꠆ꠎꠦꠘ꠆ꠐ" },
+    LoanwordEntry { english: "help", hindi: "हेल्प", bengali: "হেল্প", nagri: "ꠢꠦꠟ꠆ꠙ" },
+    LoanwordEntry { english: "job", hindi: "जॉब", bengali: "জব", nagri: "ꠎꠛ" },
+    LoanwordEntry { english: "work", hindi: "वर्क", bengali: "ওয়ার্ক", nagri: "ꠅꠀꠞ꠆ꠇ" },
+    LoanwordEntry { english: "start", hindi: "स्टार्ट", bengali: "স্টার্ট", nagri: "ꠁꠡ꠆ꠐꠣꠞ꠆ꠐ" },
+    LoanwordEntry { english: "stop", hindi: "स्टॉप", bengali: "স্টপ", nagri: "ꠁꠡ꠆ꠐꠙ" },
+    LoanwordEntry { english: "finish", hindi: "फ़िनिश", bengali: "ফিনিশ", nagri: "ꠙꠤꠘꠤꠡ" },
+    LoanwordEntry { english: "cancel", hindi: "कैंसिल", bengali: "ক্যানসেল", nagri: "ꠇꠦꠘ꠆ꠍꠦꠟ" },
+    LoanwordEntry { english: "confirm", hindi: "कन्फ़र्म", bengali: "কনফার্ম", nagri: "ꠇꠘꠚꠣꠞ꠆ꠝ" },
+    LoanwordEntry { english: "station", hindi: "स्टेशन", bengali: "স্টেশন", nagri: "ꠁꠡ꠆ꠐꠦꠡꠘ" },
+    LoanwordEntry { english: "airport", hindi: "एयरपोर्ट", bengali: "এয়ারপোর্ট", nagri: "ꠄꠀꠞꠙꠧꠞ꠆ꠐ" },
+    LoanwordEntry { english: "hotel", hindi: "होटल", bengali: "হোটেল", nagri: "ꠢꠧꠐꠦꠟ" },
+    LoanwordEntry { english: "bank", hindi: "बैंक", bengali: "ব্যাংক", nagri: "ꠛꠦꠋꠇ" },
+    LoanwordEntry { english: "road", hindi: "रोड", bengali: "রোড", nagri: "ꠞꠧꠒ" },
+    LoanwordEntry { english: "market", hindi: "मार्केट", bengali: "মার্কেট", nagri: "ꠝꠣꠞ꠆ꠇꠦꠐ" },
+    LoanwordEntry { english: "shop", hindi: "शॉप", bengali: "শপ", nagri: "ꠡꠙ" },
+    LoanwordEntry { english: "online", hindi: "ऑनलाइन", bengali: "অনলাইন", nagri: "ꠅꠘꠟꠣꠁꠘ" },
+    LoanwordEntry { english: "offline", hindi: "ऑफ़लाइन", bengali: "অফলাইন", nagri: "ꠅꠚꠟꠣꠁꠘ" },
+    LoanwordEntry { english: "video", hindi: "वीडियो", bengali: "ভিডিও", nagri: "ꠜꠤꠒꠤꠅ" },
+    LoanwordEntry { english: "photo", hindi: "फ़ोटो", bengali: "ফটো", nagri: "ꠙꠐꠧ" },
+    LoanwordEntry { english: "pic", hindi: "पिक", bengali: "পিক", nagri: "ꠙꠤꠇ" },
+    LoanwordEntry { english: "battery", hindi: "बैटरी", bengali: "ব্যাটারি", nagri: "ꠛꠦꠐꠣꠞꠤ" },
+    LoanwordEntry { english: "charger", hindi: "चार्जर", bengali: "চার্জার", nagri: "ꠌꠣꠞ꠆ꠎꠣꠞ" },
+    LoanwordEntry { english: "charge", hindi: "चार्ज", bengali: "চার্জ", nagri: "ꠌꠣꠞ꠆ꠎ" },
+    LoanwordEntry { english: "live", hindi: "लाइव", bengali: "লাইভ", nagri: "ꠟꠣꠁꠜ" },
+    LoanwordEntry { english: "location", hindi: "लोकेशन", bengali: "লোকেশন", nagri: "ꠟꠧꠇꠦꠡꠘ" },
+    LoanwordEntry { english: "number", hindi: "नंबर", bengali: "নাম্বার", nagri: "ꠘꠣꠝ꠆ꠛꠣꠞ" },
+    LoanwordEntry { english: "money", hindi: "मनी", bengali: "মানি", nagri: "ꠝꠣꠘꠤ" },
+    LoanwordEntry { english: "news", hindi: "न्यूज़", bengali: "নিউজ", nagri: "ꠘꠤꠃꠎ" },
+    LoanwordEntry { english: "link", hindi: "लिंक", bengali: "লিঙ্ক", nagri: "ꠟꠤꠋꠇ" },
+    LoanwordEntry { english: "internet", hindi: "इंटरनेट", bengali: "ইন্টারনেট", nagri: "ꠁꠘ꠆ꠐꠣꠞꠘꠦꠐ" },
+    LoanwordEntry { english: "wifi", hindi: "वाइफ़ाइ", bengali: "ওয়াইফাই", nagri: "ꠅꠀꠁꠚꠣꠁ" },
+    LoanwordEntry { english: "download", hindi: "डाउनलोड", bengali: "ডাউনলোড", nagri: "ꠒꠣꠃꠘꠟꠧꠒ" },
+    LoanwordEntry { english: "upload", hindi: "अपलोड", bengali: "আপলোড", nagri: "ꠀꠙꠟꠧꠒ" },
+    LoanwordEntry { english: "share", hindi: "शेयर", bengali: "শেয়ার", nagri: "ꠡꠦꠀꠞ" },
+    LoanwordEntry { english: "sure", hindi: "श्योर", bengali: "শিওর", nagri: "ꠡꠤꠅꠞ" },
+    LoanwordEntry { english: "clear", hindi: "क्लियर", bengali: "ক্লিয়ার", nagri: "ꠇ꠆ꠟꠤꠀꠞ" },
+    LoanwordEntry { english: "super", hindi: "सुपर", bengali: "সুপার", nagri: "ꠡꠥꠙꠣꠞ" },
+    LoanwordEntry { english: "perfect", hindi: "परफ़ेक्ट", bengali: "পারফেক্ট", nagri: "ꠙꠣꠞꠚꠦꠇ꠆ꠐ" },
+    LoanwordEntry { english: "best", hindi: "बेस्ट", bengali: "বেস্ট", nagri: "ꠛꠦꠡ꠆ꠐ" },
+    LoanwordEntry { english: "friend", hindi: "फ्रेंड", bengali: "ফ্রেন্ড", nagri: "ꠙ꠆ꠞꠦꠘ꠆ꠒ" },
+    LoanwordEntry { english: "details", hindi: "डिटेल्स", bengali: "ডিটেইলস", nagri: "ꠒꠤꠐꠦꠁꠟ꠆ꠍ" },
+    LoanwordEntry { english: "detail", hindi: "डिटेल", bengali: "ডিটেইল", nagri: "ꠒꠤꠐꠦꠁꠟ" },
 ];
 
-/// Checks if a lowercase token is a recognized common English word.
+/// Looks up an English loanword and returns its natural phonetic transcription in the target script.
+pub fn lookup_loanword(token: &str, target: TargetScript) -> Option<&'static str> {
+    let lower = token.to_lowercase();
+    for entry in ENGLISH_LOANWORDS {
+        if entry.english == lower {
+            return match target {
+                TargetScript::HindiVocalizer => Some(entry.hindi),
+                TargetScript::Bengali => Some(entry.bengali),
+                TargetScript::SylhetiNagri => Some(entry.nagri),
+            };
+        }
+    }
+    None
+}
+
+/// Checks if a lowercase token is a recognized common English word or loanword.
 pub fn is_english(token: &str) -> bool {
     let lower = token.to_lowercase();
-    COMMON_ENGLISH_WORDS.contains(&lower.as_str())
+    if lookup_loanword(&lower, TargetScript::HindiVocalizer).is_some() {
+        return true;
+    }
+    let additional_english = [
+        "hello", "hi", "hey", "bye", "ok", "okay", "sorry", "thanks", "thank", "welcome",
+        "good", "morning", "night", "evening", "afternoon", "congrats", "happy", "birthday",
+        "sir", "madam", "student", "study", "presentation", "assignment", "camera", "youtube",
+        "facebook", "whatsapp", "instagram", "google", "mail", "email", "post", "status",
+        "profile", "seat", "travel", "tour", "restaurant", "pharmacy", "atm", "mall",
+        "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+        "date", "minute", "hour", "week", "month", "year", "early", "see", "hear",
+        "listen", "tell", "say", "know", "think", "want", "need", "like", "love", "hate",
+        "feel", "try", "send", "give", "take", "join", "leave", "open", "close", "idea",
+        "plan", "reason", "bro", "brother", "sister", "guy", "guys", "everyone", "anybody",
+        "nobody", "true", "false", "real", "fake", "easy", "hard", "simple", "direct",
+        "fast", "slow", "fresh", "cool", "great", "nice", "fine", "data", "file", "document",
+    ];
+    additional_english.contains(&lower.as_str())
 }
 
 /// Checks if a token is an English word with an attached Sylheti grammatical suffix
-/// (e.g. "office-o" -> "office" + "-o", "meeting-e" -> "meeting" + "-e").
-///
-/// Returns `Some((english_stem, suffix))` if matched.
+/// (e.g. "office-o" -> ("office", "-o"), "meeting-e" -> ("meeting", "-e")).
 pub fn split_english_suffix(token: &str) -> Option<(&str, &str)> {
     let lower = token.to_lowercase();
 
@@ -58,7 +138,7 @@ pub fn split_english_suffix(token: &str) -> Option<(&str, &str)> {
     }
 
     // Check direct attached suffixes: "-o", "-e", "-ta", "-re", "-or"
-    let suffixes = ["-o", "-e", "-ta", "-re", "-or", "o", "e", "ta", "re", "or"];
+    let suffixes = ["o", "e", "ta", "re", "or"];
     for suf in suffixes {
         if lower.ends_with(suf) && lower.len() > suf.len() + 2 {
             let stem_len = token.len() - suf.len();
