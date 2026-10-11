@@ -11,4 +11,7 @@ documentation = "https://docs.rs/sylheti_phonetics"
 keywords = ["sylheti", "tts", "phonetics", "transliteration", "vocalizer"]
 categories = ["text-processing", "internationalization", "accessibility"]
 
+[lib]
+crate-type = ["rlib", "cdylib"]
+
 [dependencies]
