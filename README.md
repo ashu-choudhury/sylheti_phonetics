@@ -20,7 +20,17 @@ When my English text-to-speech engine tried to read this, the result was incompr
 
 Switching to a standard Bengali voice didn't solve the problem either. Standard Bengali phonology lacks Sylheti's distinct fricatives—specifically the velar fricative `[x]` (the rough *kh* in *khani*), the labial `[f]` (in *fani*), and the `[z]` sound.
 
-Sylheti is recognized as an endangered language, and while a small software library isn't going to single-handedly save an endangered tongue from disappearing over the next 50 years, at the very least, our everyday digital tools shouldn't make our language unreadable today.
+---
+
+## 🌍 An Endangered Language & A Step Forward
+
+Many people find it hard to believe, but it is the truth: **Sylheti is an endangered language.** 
+
+Even though millions of people speak it at home across South Assam and the Surma Valley, it has no official institutional backing. Its historical writing system (*Sylheti Nagri*) fell out of everyday use generations ago, and young speakers are increasingly pressured to leave it behind in formal and digital spaces. We genuinely do not know if this language will still be spoken 50 years from now. 
+
+While a small software library is not going to single-handedly save a language on its own, that does not mean we should sit idle. At least in our lifetime, today, we can take responsibility and build real tools that keep our language functional in the digital age.
+
+**This is my very first Rust library, and I am deeply proud to have built it.** I created this not only to solve my own everyday frustration as a screen reader user, but with the hope that it will help native speakers, developers, and people all across the Earth who want our mother tongue to be heard and understood naturally.
 
 ---
 
