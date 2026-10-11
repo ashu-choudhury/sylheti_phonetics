@@ -108,22 +108,8 @@ pub fn is_english(token: &str) -> bool {
     if lookup_loanword(&lower, TargetScript::HindiVocalizer).is_some() {
         return true;
     }
-    let additional_english = [
-        "hello", "hi", "hey", "bye", "ok", "okay", "sorry", "thanks", "thank", "welcome",
-        "good", "morning", "night", "evening", "afternoon", "congrats", "happy", "birthday",
-        "sir", "madam", "student", "study", "presentation", "assignment", "camera", "youtube",
-        "facebook", "whatsapp", "instagram", "google", "mail", "email", "post", "status",
-        "profile", "seat", "travel", "tour", "restaurant", "pharmacy", "atm", "mall",
-        "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
-        "date", "minute", "hour", "week", "month", "year", "early", "see", "hear",
-        "listen", "tell", "say", "know", "think", "want", "need", "like", "love", "hate",
-        "feel", "try", "send", "give", "take", "join", "leave", "open", "close", "idea",
-        "plan", "reason", "bro", "brother", "sister", "guy", "guys", "everyone", "anybody",
-        "nobody", "true", "false", "real", "fake", "easy", "hard", "simple", "direct",
-        "fast", "slow", "fresh", "cool", "great", "nice", "fine", "data", "file", "document",
-        "user", "admin", "login", "site", "website", "channel", "group", "account", "server",
-    ];
-    additional_english.contains(&lower.as_str())
+    // High-performance O(log N) binary search over 10,000 common English words
+    crate::english_data::COMMON_ENGLISH_WORDS.binary_search(&lower.as_str()).is_ok()
 }
 
 /// Checks if a token is an English word with an attached Sylheti grammatical suffix

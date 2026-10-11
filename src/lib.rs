@@ -19,6 +19,7 @@
 
 pub mod dictionary;
 pub mod english;
+pub mod english_data;
 pub mod ffi;
 pub mod rules;
 pub mod types;
