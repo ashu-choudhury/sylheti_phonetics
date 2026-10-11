@@ -4,141 +4,200 @@
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE-MIT)
 [![Build Status](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 
-> **Born from frustration, built with love for our mother tongue.**  
-> A high-performance native Rust library that transforms everyday Romanized Sylheti chat messages into **fluent, authentic speech** through Hindi Vocalizer TTS, standard **Bengali script**, and historical **Sylheti Nagri (`U+A800..U+A82F`)**.
+> **"We don't know if our language will still be spoken 50 years from now. But as long as we are alive today, we will fight to keep its voice heard."**
 
 ---
 
-## ❤️ Why Did I Build This?
+## ❤️ Why This Library Exists: A Letter From a Native Son
 
-One evening, I opened WhatsApp to listen to messages in our family group.
+I am from South Assam—the green valleys of Cachar, Karimganj, and Hailakandi—where the Barak flows and where our elders spoke Sylheti with every breath. 
 
-My family and friends from South Assam (Cachar, Karimganj, Hailakandi) and the Surma Valley were texting about their day, dinner plans, and evening tea. Like millions of Sylheti speakers worldwide, nobody was typing in formal Bengali script or historical Nagri font. We write the way we talk, using English letters on our phones:
+Sylheti is an endangered language. Open any linguistic report, and you will see the warnings: our historical *Sylheti Nagri* script was displaced, our grammar is pushed to the margins, and our children are growing up with their mother tongue fading from their tongues. In 50 years, will anyone still speak Sylheti here? Honestly, none of us know. 
+
+**All I know is that we are here right now, in today's digital world, and we have a duty to keep our mother tongue alive.**
+
+The idea for this project was born on an ordinary evening. I was sitting at home, opening WhatsApp to listen to our family messages. As a screen reader user, speech synthesizers are my eyes. They are how I read every text, every prayer, and every message from home.
+
+My family members were texting the way everyone in our valley texts—in Romanized English letters:
 
 > *"Bhai, kila aso? Ghoro boiya aisi, maa-e khani bonaiso, shonge aiba ni?"*
 
-As a screen reader user who relies entirely on text-to-speech to interact with the digital world, I pressed play.
+I tapped to play the message, and my English text-to-speech engine completely butchered it. It turned *"kila"* into tequila, mutilated *"khani"* into broken electronic noise, and made the words of my own mother completely unrecognizable. When I tried standard Bengali voices, they failed too—flattening our authentic `[x]` (*kh*), our soft `[f]`, and our rich `[z]` into sounds no Sylheti person ever speaks.
 
-**My English TTS engine sounded pathetic.** It stumbled, robotic and cold, butchering every word. It pronounced *"kila"* like tequila, mutilated *"khani"* into an alien noise, and turned my grandmother's and mother's expressions into painful gibberish. I could not understand a single sentence from the people I love most.
+I sat there with a heavy heart. **Our language isn't dying because we stopped loving it; it is being suffocated because the software of our modern world acts like we don't exist.**
 
-I switched to a standard Bengali voice, hoping it would help. It didn't. Bengali speech engines completely flatten the living soul of Sylheti. They cannot pronounce our velar fricative `[x]` (our deep *kh* in *khani*), our soft labial `[f]` (in *fani*), or our distinct `[z]` sounds.
+You cannot save a mother tongue by lecturing youth or forcing people to abandon how they chat. **You save a language by building tools that work for real life.** People text in Roman letters. People mix English into their daily speech. 
 
-Sitting there in silence, a heavy realization hit me:  
-**Our mother tongue is being silenced by the very software we use every day.**
-
-Not because our language is dead. Millions of us speak it every waking minute with pride. But modern speech technology acts like we don't exist.
-
-I asked myself: *How do we fix this mess?*
-
-You cannot save a language by lecturing teenagers on social media or demanding that our parents learn complex keyboard layouts. **The only true way to revive an endangered mother tongue is to build technology that meets our people exactly where they are.**
-
-People chat in Romanized English letters. People naturally mix English loanwords into their conversations. 
-
-So I wrote **`sylheti_phonetics`**.
-
-This is my very first Rust library, and it represents my heart, my heritage, and my identity.
+So I wrote **`sylheti_phonetics`**—my very first Rust library, built with every ounce of my heart and care, so that any phone, any screen reader, and any application on Earth can speak our mother tongue naturally.
 
 ---
 
-## 💡 How It Solves the Problem
+## 💡 The Core Innovation
 
-Instead of demanding gigabytes of AI models and expensive cloud servers, this engine works through linguistic brilliance:
+Instead of demanding massive AI servers or complex models, `sylheti_phonetics` is engineered with clean linguistic precision:
 
-### 1. The Devanagari Phonetic Bridge
-Hindi Devanagari script features Nukta consonants (`ख़`, `फ़`, `ज़`, `श`) that mirror authentic Sylheti mouth movements **one-to-one**. When Romanized Sylheti is mapped to this phonetic structure, standard Hindi TTS synthesizers (like Nuance Vocalizer's *Lekha* or *Neel*) pronounce Sylheti with **breath-taking, natural authenticity**.
+```
+[ WhatsApp Chat: "Bhai, ami office-o meeting-e aisi, please call khoro." ]
+                                       │
+                                       ▼
+                     ┌───────────────────────────────────┐
+                     │         sylheti_phonetics         │
+                     │  - Word Dictionary Lookup         │
+                     │  - English Loanword Classifier    │
+                     │  - Morphological Suffix Stripper  │
+                     │  - Phonetic Nukta Engine          │
+                     └───────────────────────────────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        ▼                              ▼                              ▼
+ [ Natural TTS Mode ]          [ Strict Latin Mode ]          [ Historical Nagri ]
+   (For Vocalizer TTS)            (For Visual Text)           (Unicode U+A800)
+"भाइ, आमी ऑफ़िस-ओ              "भाइ, आमी office-ओ            "ꠜꠣꠁ, ꠀꠝꠤ office-ꠅ
+ मीटिंग-ए आइसी,                  meeting-ए आइसी,                meeting-ꠄ ꠀꠁꠍꠤ,
+ प्लीज़ कॉल ख़ोरो."               please call ख़ोरो."            please call ꠇꠞꠧ."
+```
 
-### 2. Full Developer Control: Natural vs. Strict Modes
-Real people don't speak 100% textbook Sylheti. They chat:
-> *"Bhai, ami office-o meeting-e aisi, please call khoro."*
-
-When a synthesizer encounters sudden English Latin letters in the middle of Indic text, it often hiccups, stutters, or awkwardly shifts voice profiles mid-sentence. `sylheti_phonetics` gives developers full control:
-
-* **Natural Mode (Default):** Intelligently recognizes loanwords like `office`, `meeting`, `please`, `call` and maps them to smooth Indian phonetic equivalents (`ऑफ़िस-ओ`, `मीटिंग-ए`, `प्लीज़`, `कॉल`). The speech synthesizer reads the whole sentence in **one continuous, natural, human breath**.
-* **Strict Mode:** Keeps English words strictly in raw Latin characters (`office-ओ`, `meeting-ए`, `please`, `call`) for developers who need distinct visual script boundaries.
-* **Raw Phonetic Mode:** Transliterates every character strictly through Sylheti phonetic rules.
-
-### 3. Preserving Our Heritage (Nagri & Bengali)
-Every sentence can simultaneously be converted to **historical Sylheti Nagri Unicode (`U+A800..U+A82F`)** and standard **Bengali script**, keeping our ancient literary tradition alive.
-
----
-
-## ⚡ Performance & Design
-
-* **Zero External Dependencies:** Built 100% on pure, safe Rust standard library.
-* **Microsecond Speed:** Processes whole chat threads in microseconds with negligible RAM.
-* **Universal Portability:**
-  * Direct Rust crate: `cargo add sylheti_phonetics`
-  * Screen readers: Compiles to C-ABI (`.dll` / `.so`) for NVDA plugins
-  * Mobile: Ready for Android integration via JNI (`.aar`)
-  * Web: Compiles directly to WebAssembly (`.wasm`) for in-browser speech apps
+1. **The Devanagari TTS Bridge:** Hindi Devanagari features Nukta characters (`ख़`, `फ़`, `ज़`, `श`) that mirror authentic Sylheti mouth movements **1-to-1**. When converted to this phonetic script, standard Hindi synthesizers (like Nuance Vocalizer's *Lekha* or *Neel*) pronounce Sylheti with **stunning, lifelike authenticity**.
+2. **Natural Mode (Default):** Seamlessly integrates loanwords like `office` $\to$ `ऑफ़िस`, `meeting` $\to$ `मीटिंग`, `call` $\to$ `कॉल` so that the TTS voice speaks in **one continuous, natural, human breath** without voice glitches or awkward pauses.
+3. **Strict Mode:** Preserves English loanwords in pure Latin characters for visual chat feeds.
+4. **Heritage Revival:** Converts text simultaneously into **historical Sylheti Nagri Unicode (`U+A800..U+A82F`)** and standard **Bengali script**.
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Technical Architecture & Developer Guide
 
-Add to your `Cargo.toml`:
+### 📦 Installation
+
+Add `sylheti_phonetics` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 sylheti_phonetics = "0.1.0"
 ```
 
-### 1. Natural Mode (Recommended for TTS Synthesizers)
+Or install directly via Cargo:
+
+```bash
+cargo add sylheti_phonetics
+```
+
+---
+
+### 🛠️ Comprehensive Usage Guide
+
+#### 1. Audio-Ready Speech Synthesis (Natural Mode — Recommended)
+
+This is the primary function for screen readers, voice bots, and TTS applications. It converts Romanized Sylheti while phonetically integrating English loanwords to guarantee smooth, uninterrupted audio playback:
 
 ```rust
 use sylheti_phonetics::to_hindi_phonetic;
 
 fn main() {
-    let chat = "Bhai, ami office-o meeting-e aisi, please call khoro.";
+    let message = "Bhai, ami office-o meeting-e aisi, please call khoro.";
     
-    // Smooth, uninterrupted speech synthesis:
-    let audio_text = to_hindi_phonetic(chat);
-    println!("{}", audio_text);
+    let speech_text = to_hindi_phonetic(message);
+    println!("{}", speech_text);
     // Output: "भाइ, आमी ऑफ़िस-ओ मीटिंग-ए आइसी, प्लीज़ कॉल ख़ोरो."
+    // Pass this directly to your Hindi Vocalizer / SAPI / Android TTS!
 }
 ```
 
-### 2. Strict Mode (Preserving Latin Characters)
+#### 2. Strict Latin Mode (For Visual Chat & Screen Readers)
+
+If your application displays chat text visually on screen and needs English words preserved strictly in Latin characters:
 
 ```rust
 use sylheti_phonetics::to_hindi_phonetic_strict;
 
 fn main() {
-    let chat = "Bhai, ami office-o meeting-e aisi, please call khoro.";
+    let message = "Bhai, ami office-o meeting-e aisi, please call khoro.";
     
-    let strict_text = to_hindi_phonetic_strict(chat);
-    println!("{}", strict_text);
+    let visual_text = to_hindi_phonetic_strict(message);
+    println!("{}", visual_text);
     // Output: "भाइ, आमी office-ओ meeting-ए आइसी, please call ख़ोरो."
 }
 ```
 
-### 3. Reviving Our Written Script (Nagri & Bengali)
+#### 3. Preserving Our Written Heritage (Sylheti Nagri & Bengali)
+
+Bridge modern casual chat back to our historical roots:
 
 ```rust
 use sylheti_phonetics::{to_bengali, to_nagri};
 
 fn main() {
-    let text = "Kila aso bhai? Khani khaiso ni?";
+    let greeting = "Kila aso bhai? Khani khaiso ni?";
 
-    println!("Bengali: {}", to_bengali(text));
+    // Standard Bengali Script
+    println!("Bengali: {}", to_bengali(greeting));
     // Output: "কিলা আসো ভাই? খানি খাইসো নি?"
 
-    println!("Nagri:   {}", to_nagri(text));
+    // Historical Sylheti Nagri Unicode (U+A800..U+A82F)
+    println!("Nagri:   {}", to_nagri(greeting));
     // Output: "ꠇꠤꠟꠣ ꠀꠍꠧ ꠜꠣꠁ? ꠈꠣꠘꠤ ꠈꠣꠁꠍꠧ ꠘꠤ?"
+}
+```
+
+#### 4. Fine-Grained Developer Options
+
+Configure every aspect of the transformation engine:
+
+```rust
+use sylheti_phonetics::{convert, ConversionOptions, EnglishMode, TargetScript};
+
+fn main() {
+    let options = ConversionOptions {
+        target: TargetScript::HindiVocalizer,
+        english_mode: EnglishMode::Natural, // or EnglishMode::Strict, EnglishMode::RawPhonetic
+    };
+
+    let text = "Mobile-o message check khoriya dekho.";
+    let output = convert(text, &options);
+    println!("{}", output);
+    // Output: "मोबाइल-ओ मैसेज चेक ख़ोरिया देख़ो."
+}
+```
+
+#### 5. Dictionary Lookup & Metadata
+
+Inspect linguistic metadata for individual words:
+
+```rust
+use sylheti_phonetics::find_word;
+
+fn main() {
+    if let Some(entry) = find_word("khosoba") {
+        println!("Canonical : {}", entry.canonical_roman);  // "khosoba"
+        println!("Hindi TTS  : {}", entry.hindi_phonetic);   // "ख़ोशोबा"
+        println!("Bengali    : {}", entry.bengali_script);   // "খোশোবা"
+        println!("Nagri      : {}", entry.nagri_script);     // "ꠈꠧꠡꠛꠣ"
+        println!("Meaning    : {}", entry.english_meaning);  // "fragrant / sweet aroma"
+        println!("Part of Sp : {:?}", entry.pos);            // Adjective
+    }
 }
 ```
 
 ---
 
-## 🧪 Testing & Demo
+## 🌍 Platform Integrations
 
-Run the test suite:
+Because this crate is written in 100% safe, dependency-free Rust, it can be deployed everywhere:
+
+* **NVDA Screen Reader & Windows SAPI:** Compile as a C-ABI dynamic library (`cdylib` `.dll`) to intercept speech calls in screen readers.
+* **Android (JNI):** Compile as `.so` or package into an `.aar` library to run natively inside Android accessibility services.
+* **Web & Browsers (WASM):** Compile to `wasm32-unknown-unknown` with `wasm-bindgen` for instant, zero-latency browser speech tools.
+
+---
+
+## 🧪 Testing & Verification
+
+Run the comprehensive unit test and doctest suite:
 
 ```bash
 cargo test
 ```
 
-Run the live interactive demonstration:
+Run the live interactive demonstration with real-world examples:
 
 ```bash
 cargo run --example demo
@@ -146,15 +205,17 @@ cargo run --example demo
 
 ---
 
-## ✊ An Open Call to Our People
+## ✊ An Open Call to Everyone
 
-We must protect our mother tongue at all costs. Not with anger, but with working code.
+Whether you are from Silchar, Karimganj, Hailakandi, Sylhet, London, or New York—this project belongs to all of us. 
 
-If you speak Sylheti—whether you are from South Assam (Cachar, Karimganj, Hailakandi), Sylhet, or London—please contribute. Open a PR, add vocabulary from your locality, fine-tune pronunciations, and let's ensure our language never goes silent.
+We might not know what will happen to our language in 50 years. But today, right here, right now, we can write code, add words, refine pronunciations, and give our mother tongue the digital dignity it deserves.
+
+Contributions, word additions, and feedback are welcomed with open arms.
 
 ---
 
-## 🔬 Research & Citations
+## 🔬 Citations & Academic References
 
 1. **End-to-end variational speech synthesis for the endangered Sylheti Nagri language** (Md. Ataullha, Soumik Paul Jisun, M. Shahidur Rahman, *Systems and Soft Computing*, 2026, [DOI: 10.1016/j.sasc.2026.200496](https://doi.org/10.1016/j.sasc.2026.200496))
 2. **SOAS Sylheti Project** — Descriptive Lexicon & Nagri revival (SOAS University of London)
@@ -164,7 +225,7 @@ If you speak Sylheti—whether you are from South Assam (Cachar, Karimganj, Hail
 
 ## 📄 License
 
-Dual-licensed under either of:
+Dual-licensed under either:
 
 * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
 * MIT license ([LICENSE-MIT](LICENSE-MIT))
