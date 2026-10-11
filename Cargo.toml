@@ -5,6 +5,9 @@ edition = "2024"
 description = "High-performance Sylheti phonetic dictionary and transliteration engine for TTS, NLP, and Romanized chat text."
 readme = "README.md"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/ashu-choudhury/sylheti_phonetics"
+homepage = "https://github.com/ashu-choudhury/sylheti_phonetics"
+documentation = "https://docs.rs/sylheti_phonetics"
 keywords = ["sylheti", "tts", "phonetics", "transliteration", "vocalizer"]
 categories = ["text-processing", "internationalization", "accessibility"]
 
