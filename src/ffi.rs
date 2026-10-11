@@ -2,15 +2,49 @@
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use crate::to_hindi_phonetic;
+use crate::{to_hindi_phonetic, to_hindi_phonetic_strict};
 
-/// Converts a null-terminated UTF-8 C string of Romanized Sylheti to Hindi Devanagari phonetics.
+/// Converts a null-terminated UTF-8 C string of Romanized Sylheti to Hindi Devanagari phonetics using Strict Mode.
+/// Only dedicated Sylheti vocabulary and Sylheti suffixes are converted to Devanagari.
+/// General English and desktop UI text are strictly preserved in their original Latin script.
+///
+/// # Safety
+/// The caller must ensure `input` is a valid, null-terminated C string pointer.
+/// The returned pointer must be freed with `sylheti_free_string`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sylheti_convert_to_hindi_strict(input: *const c_char) -> *mut c_char {
+    if input.is_null() {
+        return std::ptr::null_mut();
+    }
+    let c_str = unsafe { CStr::from_ptr(input) };
+    let r_str = match c_str.to_str() {
+        Ok(s) => s,
+        Err(_) => return std::ptr::null_mut(),
+    };
+    let converted = to_hindi_phonetic_strict(r_str);
+    match CString::new(converted) {
+        Ok(c_string) => c_string.into_raw(),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+/// Converts a null-terminated UTF-8 C string of Romanized Sylheti to Hindi Devanagari phonetics (defaults to strict mode for screen reader safety).
 ///
 /// # Safety
 /// The caller must ensure `input` is a valid, null-terminated C string pointer.
 /// The returned pointer must be freed with `sylheti_free_string`.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sylheti_convert_to_hindi(input: *const c_char) -> *mut c_char {
+    unsafe { sylheti_convert_to_hindi_strict(input) }
+}
+
+/// Converts a null-terminated UTF-8 C string using natural TTS loanword transliteration mode.
+///
+/// # Safety
+/// The caller must ensure `input` is a valid, null-terminated C string pointer.
+/// The returned pointer must be freed with `sylheti_free_string`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sylheti_convert_to_hindi_natural(input: *const c_char) -> *mut c_char {
     if input.is_null() {
         return std::ptr::null_mut();
     }

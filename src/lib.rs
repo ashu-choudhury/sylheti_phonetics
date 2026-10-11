@@ -263,10 +263,17 @@ fn process_token(token: &str, options: &ConversionOptions) -> String {
     }
 
     // 3. Fallback to phonetic rule transformation
-    match options.target {
-        TargetScript::HindiVocalizer => roman_to_hindi_phonetic(token),
-        TargetScript::Bengali => roman_to_bengali(token),
-        TargetScript::SylhetiNagri => roman_to_nagri(token),
+    match options.english_mode {
+        EnglishMode::Strict => {
+            // In Strict Mode, do not aggressively phoneticize arbitrary Latin words into Devanagari.
+            // Only dictionary-matched words and explicit Sylheti suffixes are converted.
+            token.to_string()
+        }
+        _ => match options.target {
+            TargetScript::HindiVocalizer => roman_to_hindi_phonetic(token),
+            TargetScript::Bengali => roman_to_bengali(token),
+            TargetScript::SylhetiNagri => roman_to_nagri(token),
+        },
     }
 }
 
