@@ -1,9 +1,11 @@
 [package]
-name = "keyword_holder"
+name = "sylheti_phonetics"
 version = "0.1.0"
 edition = "2024"
-description = "Sylheti phonetic dictionary and transliteration engine (Romanized Sylheti to Hindi Devanagari for Vocalizer TTS, Bangla, and Nagri)"
+description = "High-performance Sylheti phonetic dictionary and transliteration engine for TTS, NLP, and Romanized chat text."
+readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["sylheti", "tts", "phonetics", "transliteration", "vocalizer"]
+categories = ["text-processing", "internationalization", "accessibility"]
 
 [dependencies]

@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "keyword_holder"
+name = "sylheti_phonetics"
 version = "0.1.0"
